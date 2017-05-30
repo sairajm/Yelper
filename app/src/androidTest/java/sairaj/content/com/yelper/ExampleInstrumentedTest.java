@@ -1,4 +1,4 @@
-package interview.operr.com.yelper;
+package sairaj.content.com.yelper;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

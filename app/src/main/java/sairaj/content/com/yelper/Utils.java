@@ -1,26 +1,18 @@
-package interview.operr.com.yelper;
+package sairaj.content.com.yelper;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.net.Credentials;
 import android.os.AsyncTask;
-
-import com.google.android.gms.auth.api.credentials.Credential;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
-import okhttp3.Authenticator;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.Route;
 
 /**
  * Created by Sairaj on 5/18/2017.
