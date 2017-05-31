@@ -30,6 +30,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-maps:10.0.1'
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
     compile 'com.jakewharton:process-phoenix:2.0.0'
+    compile 'me.zhanghai.android.materialratingbar:library:1.0.2'
     testCompile 'junit:junit:4.12'
 
 }

@@ -11,7 +11,9 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -26,10 +28,14 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.text.Layout;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RatingBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -39,9 +45,11 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -70,7 +78,6 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Google
     SharedPreferences sharedPreferences;
     Boolean mapReady = false;
     ImageView imageView;
-    boolean restart = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -207,7 +214,9 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Google
     }
 
     public void renderMap() {
-        mapFragment = MapFragment.newInstance();
+        GoogleMapOptions googleMapOptions = new GoogleMapOptions();
+        googleMapOptions.mapType(GoogleMap.MAP_TYPE_TERRAIN).compassEnabled(true);
+        mapFragment = MapFragment.newInstance(googleMapOptions);
         FragmentTransaction fragmentTransaction =
                 getFragmentManager().beginTransaction();
         fragmentTransaction.add(R.id.map, mapFragment);
@@ -394,19 +403,34 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Google
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         if (mapReady) {
             map = addYelpBusinessMarkers(yelp_returns, map);
+            System.out.println("INFO" + " marker clicked");
             map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                 @Override
                 public boolean onMarkerClick(Marker marker) {
                     final Dialog dialog = new Dialog(Home.this);
                     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                    dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+                    int width = (int)(getResources().getDisplayMetrics().widthPixels);
+                    int height = (int)(getResources().getDisplayMetrics().heightPixels*0.65);
+                    if(dialog.getWindow()!=null)
+                    {
+                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+                        dialog.setCanceledOnTouchOutside(true);
+                    }
+                    else
+                    {
+                        System.out.println("dialog null");
+                    }
                     dialog.setContentView(R.layout.infowindowlayout);
+                    dialog.getWindow().setLayout(width, height);
                     imageView = (ImageView) dialog.findViewById(R.id.imageV);
+                    imageView.setScaleType(ImageView.ScaleType.FIT_XY);
                     TextView name = (TextView) dialog.findViewById(R.id.Name);
                     TextView address = (TextView) dialog.findViewById(R.id.address);
                     TextView phone = (TextView) dialog.findViewById(R.id.phone);
-                    TextView rating = (TextView) dialog.findViewById(R.id.rating);
                     TextView price = (TextView) dialog.findViewById(R.id.price);
+                    RatingBar ratingBar = (RatingBar)dialog.findViewById(R.id.ratingBar);
+                    ratingBar.setActivated(false);
+                    ratingBar.setBackgroundColor(Color.TRANSPARENT);
                     int index = -1;
                     for (int i = 0; i < yelp_returns.size(); i++) {
                         String lat = "" + marker.getPosition().latitude;
@@ -431,15 +455,14 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Google
                                 imageView.setImageBitmap(bmp);
                             }
                             bufferedInputStream.close();
-                            name.setText("" + yelp_returns.get(index).get(0));
-                            rating.setText("Rating: " + yelp_returns.get(index).get(1));
-                            address.setText("Address: " + yelp_returns.get(index).get(2));
-                            phone.setText("Phone: " + yelp_returns.get(index).get(3));
-                            price.setText("Price: " + yelp_returns.get(index).get(4));
+                            name.setText("  " + yelp_returns.get(index).get(0));
+                            ratingBar.setRating(Float.parseFloat(yelp_returns.get(index).get(1)));
+                            address.setText("  " + yelp_returns.get(index).get(2));
+                            phone.setText("  " + yelp_returns.get(index).get(3));
+                            price.setText("  " + yelp_returns.get(index).get(4));
                         } else {
                             name.setText("You are at");
-                            rating.setText("" + latitude + ", " + longitude);
-                            address.setText(" ");
+                            address.setText("" + latitude + ", " + longitude);
                             phone.setText(" ");
                             price.setText(" ");
                         }
@@ -450,25 +473,20 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Google
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    Button button = (Button) dialog.findViewById(R.id.close);
-                    button.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            dialog.cancel();
-                        }
-                    });
                     dialog.show();
                     return true;
                 }
             });
 
             marker = map.addMarker(markerOptions);
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(latitude, longitude)).zoom(15).tilt(30).build();
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 15));
-            map.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 2000, null);
         } else {
             marker = map.addMarker(markerOptions);
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(latitude, longitude)).zoom(15).tilt(30).build();
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 15));
-            map.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 2000, null);
         }
 
 
