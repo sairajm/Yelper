@@ -4,5 +4,5 @@ Yelper is an android application that fetches all restaurants around a user from
 I have tested the application on an LG device running Android 5.1 (API level 22), it works without any crashes. GPS location provider should be enabled.
 
 ## Screenshot
-<a href="url"><img src="https://github.com/sairajm/Yelper/blob/master/screenshots/main.png" align="left" height="400" width="400" ></a>
+<a href="url"><img src="https://github.com/sairajm/Yelper/blob/master/screenshots/main.png" align="left" height="500" width="300" ></a>
 
